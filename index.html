@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cantina Jovens e Adolescentes | Contas e cardápio</title>
+  <link rel="stylesheet" href="style.css?v=20">
+</head>
+<body>
+
+  <!-- Cabeçalho fixo no topo da página -->
+  <header class="topo">
+    <div class="topo-interno">
+      <a class="marca" href="#inicio">
+        <span class="marca-icone">🍬</span> Cantina Jovens e Adolescentes
+      </a>
+      <nav class="nav">
+        <a href="#cardapio">Cardápio</a>
+        <a href="#contas">Contas</a>
+        <a href="#admin">Administração</a>
+      </nav>
+      <button class="botao-tema" id="alternar-tema" type="button" title="Mudar cor do fundo" aria-label="Mudar para o fundo escuro">🌙</button>
+      <button class="botao-carrinho" id="abrir-carrinho" type="button">
+        🛒 <span>Carrinho</span> <span class="badge" id="contador-carrinho">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Apresentação -->
+    <section class="hero" id="inicio">
+      <div>
+        <span class="item-categoria">Direto da cantina</span>
+        <h1>Doces, sorvetes e contas em um só lugar.</h1>
+        <p>Monte o pedido, registre na conta da pessoa e acompanhe quem já pagou. Simples assim!</p>
+        <a class="botao-primario hero-cta" href="#cardapio">Ver cardápio ↓</a>
+        <a class="botao-secundario hero-cta" href="#contas">💰 Ver contas →</a>
+      </div>
+      <div class="emoji" aria-hidden="true">🍭</div>
+    </section>
+
+    <!-- Cardápio -->
+    <section class="secao" id="cardapio">
+      <div class="secao-cabecalho">
+        <div>
+          <h2>Cardápio</h2>
+          <p class="secao-sub">Clique em “Adicionar” para colocar no carrinho e registrar na conta de alguém.</p>
+        </div>
+      </div>
+      <div class="filtros" id="filtros"></div>
+      <div class="grade-cardapio" id="grade-cardapio"></div>
+    </section>
+
+    <!-- Contas das pessoas que já fizeram pedidos -->
+    <section class="secao" id="contas">
+      <div class="secao-cabecalho">
+        <div>
+          <h2>Contas das pessoas</h2>
+          <p class="secao-sub" id="resumo-contas">Nenhuma conta ainda.</p>
+        </div>
+      </div>
+      <div class="filtros" id="filtros-contas">
+        <button type="button" class="filtro ativa" data-acao="filtrar-conta" data-status="todas">Todas</button>
+        <button type="button" class="filtro" data-acao="filtrar-conta" data-status="aberta">Em aberto</button>
+        <button type="button" class="filtro" data-acao="filtrar-conta" data-status="paga">Pagas</button>
+      </div>
+      <div class="lista-pessoas" id="lista-contas"></div>
+    </section>
+
+    <!-- Gerenciamento do cardápio -->
+    <section class="secao" id="admin">
+      <details class="admin" open>
+        <summary>⚙️ Gerenciar produtos</summary>
+
+        <div class="admin-conteudo" id="admin-conteudo">
+          <h3>Produtos e estoque</h3>
+          <p class="secao-sub">Edite preço, categoria ou quantidade. Os produtos abaixo já vêm cadastrados.</p>
+          <form class="form-item" id="form-item">
+            <label class="campo">Nome do item
+              <input id="item-nome" type="text" placeholder="Ex.: Bala banana" required>
+            </label>
+            <label class="campo">Descrição
+              <input id="item-descricao" type="text" placeholder="Ex.: Pacotinho">
+            </label>
+            <label class="campo">Preço (R$)
+              <input id="item-preco" type="number" min="0.01" step="0.01" placeholder="2.50" required>
+            </label>
+            <label class="campo">Estoque (quantidade)
+              <input id="item-estoque" type="number" min="0" step="1" value="20" required>
+            </label>
+            <label class="campo">Categoria
+              <select id="item-categoria">
+                <option>Doces</option>
+                <option>Salgados</option>
+                <option>Sorvetes</option>
+                <option>Bebidas</option>
+                <option>Outros</option>
+              </select>
+            </label>
+            <label class="campo">Emoji
+              <input id="item-emoji" type="text" maxlength="4" placeholder="🍬" value="🍽️">
+            </label>
+            <div class="admin-form-botoes">
+              <button class="botao-primario" id="btn-salvar-item" type="submit">Adicionar item</button>
+              <button class="botao-texto" id="btn-cancelar-edicao" type="button" hidden>Cancelar edição</button>
+            </div>
+          </form>
+          <div class="lista-admin" id="lista-admin"></div>
+          <button class="botao-texto" id="btn-limpar" type="button">Restaurar dados originais</button>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <footer>Cantina Jovens e Adolescentes 🧡 — os dados ficam salvos apenas neste navegador.</footer>
+
+  <!-- Carrinho lateral -->
+  <div class="fundo-carrinho" id="fundo-carrinho"></div>
+  <aside class="carrinho" id="carrinho" aria-hidden="true">
+    <div class="carrinho-cabecalho">
+      <h2>🛒 Seu carrinho</h2>
+      <button class="fechar" id="fechar-carrinho" type="button" aria-label="Fechar carrinho">✕</button>
+    </div>
+
+    <div class="itens-carrinho" id="itens-carrinho"></div>
+
+    <form class="carrinho-rodape" id="form-pedido">
+      <div class="total-linha">
+        <span>Total</span>
+        <span id="total-carrinho">R$ 0,00</span>
+      </div>
+      <label class="campo">Nome da pessoa
+        <input id="nome-cliente" type="text" list="lista-nomes" placeholder="Ex.: Tio Phe" autocomplete="off" required>
+      </label>
+      <datalist id="lista-nomes"></datalist>
+      <p class="secao-sub">O pedido será adicionado à conta dessa pessoa (ou uma nova conta será criada).</p>
+      <button class="botao-primario" id="btn-finalizar" type="submit">Registrar pedido na conta</button>
+    </form>
+  </aside>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js?v=20"></script>
+</body>
+</html>
