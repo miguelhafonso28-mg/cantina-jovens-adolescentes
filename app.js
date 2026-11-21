@@ -202,6 +202,8 @@ let tema = ler(CHAVES.tema, 'claro');
 let editandoId = null;
 let filtroAtual = 'Todos';
 let filtroContas = 'todas';
+let contaDestaqueId = null;
+let timerDestaque = null;
 
 if (!Array.isArray(cardapioCustom)) cardapioCustom = [];
 if (!cardapioEditados || typeof cardapioEditados !== 'object') cardapioEditados = {};
@@ -426,14 +428,54 @@ function buscarConta(nome) {
   return contas.find((conta) => normalizarNome(conta.nome) === chave);
 }
 
+function textoAtualizacao(conta) {
+  const data = new Date(conta.atualizadoEm);
+  if (!conta.atualizadoEm || Number.isNaN(data.getTime())) return '';
+
+  const minutos = Math.floor((Date.now() - data.getTime()) / 60000);
+  if (minutos < 1) return 'Atualizada agora';
+  if (minutos < 60) return `Atualizada há ${minutos} min`;
+
+  return 'Atualizada em '
+    + new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(data);
+}
+
+// Destaca a conta que recebeu o pedido para a atualização ficar visível de imediato.
+function destacarConta(conta, mensagem) {
+  contaDestaqueId = conta.id;
+
+  const status = statusConta(conta);
+  if ((filtroContas === 'paga' && status !== 'pago') || (filtroContas === 'aberta' && status === 'pago')) {
+    filtroContas = 'todas';
+  }
+
+  renderizarFiltrosContas();
+  renderizarContas();
+
+  const cartao = document.querySelector(`[data-conta-card="${conta.id}"]`);
+  if (cartao) cartao.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  mostrarMensagem(mensagem);
+
+  clearTimeout(timerDestaque);
+  timerDestaque = setTimeout(() => {
+    contaDestaqueId = null;
+    renderizarContas();
+  }, 6000);
+}
+
 function registrarPedido(nome, itens) {
-  if (!nome || !itens.length) return;
+  if (!nome || !itens.length) return null;
 
   let conta = buscarConta(nome);
+  const novaConta = !conta;
   if (!conta) {
     conta = { id: 'conta-' + Date.now(), nome: nome.trim(), itens: [] };
     contas.push(conta);
   }
+
+  const valorAdicionado = itens.reduce((total, { item, quantidade, quantidadeGrupo }) =>
+    total + precoTotalItem(item, quantidade, quantidadeGrupo || quantidade), 0);
 
   itens.forEach(({ item, quantidade, quantidadeGrupo }) => {
     const precoUnitario = precoUnitarioItem(item, quantidadeGrupo || quantidade);
@@ -452,7 +494,9 @@ function registrarPedido(nome, itens) {
     }
   });
 
+  conta.atualizadoEm = Date.now();
   salvarContas();
+  return { conta, valorAdicionado, novaConta };
 }
 
 function renderizarNomes() {
@@ -510,10 +554,16 @@ function renderizarContas() {
         </span>
       </div>`).join('');
 
+    const atualizacao = textoAtualizacao(conta);
+
     return `
-      <article class="conta-card">
+      <article class="conta-card ${contaDestaqueId === conta.id ? 'conta-atualizada' : ''}"
+               data-conta-card="${escapar(conta.id)}">
         <div class="conta-topo">
-          <h3>👤 ${escapar(conta.nome)}</h3>
+          <div>
+            <h3>👤 ${escapar(conta.nome)}</h3>
+            ${atualizacao ? `<small class="conta-atualizacao">🕒 ${escapar(atualizacao)}</small>` : ''}
+          </div>
           <span class="conta-status status-${status}">${statusTexto}</span>
         </div>
         <div class="conta-itens">${linhas || '<p class="secao-sub">Conta sem itens.</p>'}</div>
@@ -561,15 +611,17 @@ function finalizarPedido(evento) {
     return;
   }
 
-  registrarPedido(nome, itens);
+  const pedido = registrarPedido(nome, itens);
   darBaixaNoEstoque(itens);
   carrinho = {};
   salvar(CHAVES.carrinho, carrinho);
 
   renderizarTudo();
   fecharCarrinho();
-  mostrarMensagem(`Pedido registrado na conta de ${nome}!`);
-  $('#contas').scrollIntoView({ behavior: 'smooth' });
+
+  const acao = pedido.novaConta ? 'Conta criada' : 'Conta atualizada';
+  destacarConta(pedido.conta,
+    `${acao} para ${pedido.conta.nome}: + ${dinheiro(pedido.valorAdicionado)} • total ${dinheiro(totalConta(pedido.conta))}.`);
 }
 
 // ---------- Tema ----------
@@ -806,9 +858,9 @@ document.addEventListener('click', (evento) => {
       });
     }
 
+    conta.atualizadoEm = Date.now();
     salvarContas();
-    renderizarContas();
-    mostrarMensagem(`${produto.nome} adicionado à conta de ${conta.nome}.`);
+    destacarConta(conta, `${produto.nome} adicionado à conta de ${conta.nome} • total ${dinheiro(totalConta(conta))}.`);
   }
 
   if (acao === 'editar-item') prepararEdicao(id);
@@ -866,6 +918,18 @@ el.btnLimpar.addEventListener('click', () => {
   aplicarTema();
   renderizarTudo();
   mostrarMensagem('Dados originais restaurados.');
+});
+
+// Mantém as contas atualizadas se o pedido for registrado em outra aba.
+window.addEventListener('storage', (evento) => {
+  if (evento.key !== CHAVES.contas) return;
+  const novasContas = ler(CHAVES.contas, contas);
+  if (!Array.isArray(novasContas)) return;
+
+  contas = novasContas;
+  renderizarContas();
+  renderizarNomes();
+  mostrarMensagem('Contas atualizadas.');
 });
 
 // ---------- Início ----------

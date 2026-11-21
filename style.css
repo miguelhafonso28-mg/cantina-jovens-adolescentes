@@ -219,9 +219,11 @@ body.tema-escuro .item-estoque.esgotado { color: #fca5a5; }
 
 /* ---------- Contas das pessoas ---------- */
 .lista-pessoas { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; align-items: start; }
-.conta-card { background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); padding: 18px; box-shadow: var(--sombra); }
+.conta-card { background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); padding: 18px; box-shadow: var(--sombra); transition: box-shadow 0.25s ease, border-color 0.25s ease; }
+.conta-card.conta-atualizada { border-color: var(--cor-principal); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18), var(--sombra); }
 .conta-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .conta-card h3 { margin: 0 0 4px; font-size: 1.1rem; }
+.conta-atualizacao { display: block; color: var(--acento-texto); font-size: 0.75rem; font-weight: 700; }
 .conta-status { padding: 5px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; white-space: nowrap; }
 .status-pago { background: #dbeafe; color: #1e40af; }
 .status-aberto { background: #fef3c7; color: #92400e; }
